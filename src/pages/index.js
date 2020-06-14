@@ -22,6 +22,12 @@ const RootIndex = (props) => {
   return (
     <Layout location={props.location}>
       <h4>Dynamic (via SDK)</h4>
+      <p>
+        This is using{" "}
+        <a href="https://github.com/contentful/contentful.js">
+          Contentful's JavaScript SDK for the Delivery API
+        </a>
+      </p>
       {content && (
         <>
           <h1>{content.fields.customerName}</h1>
