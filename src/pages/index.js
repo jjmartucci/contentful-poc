@@ -1,86 +1,55 @@
-import React from 'react'
-import { graphql } from 'gatsby'
-import get from 'lodash/get'
-import Helmet from 'react-helmet'
-import Hero from '../components/hero'
-import Layout from '../components/layout'
-import ArticlePreview from '../components/article-preview'
+import React, { useEffect, useState } from "react";
+import { graphql } from "gatsby";
+import Layout from "../components/layout";
+import { createClient } from "contentful";
 
-class RootIndex extends React.Component {
-  render() {
-    const siteTitle = get(this, 'props.data.site.siteMetadata.title')
-    const posts = get(this, 'props.data.allContentfulBlogPost.edges')
-    const [author] = get(this, 'props.data.allContentfulPerson.edges')
+const RootIndex = (props) => {
+  const [content, setContent] = useState(undefined);
+  const customer = props.data.allContentfulCustomer.edges[0].node;
 
-    return (
-      <Layout location={this.props.location}>
-        <div style={{ background: '#fff' }}>
-          <Helmet title={siteTitle} />
-          <Hero data={author.node} />
-          <div className="wrapper">
-            <h2 className="section-headline">Recent articles</h2>
-            <ul className="article-list">
-              {posts.map(({ node }) => {
-                return (
-                  <li key={node.slug}>
-                    <ArticlePreview article={node} />
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
-        </div>
-      </Layout>
-    )
-  }
-}
+  useEffect(() => {
+    const client = createClient({
+      space: "q25xzqb0p0qy",
+      accessToken: "iLrZ9st6zG5BxT8ksc8KmRM_LDsoVDMUI9Kgn-EduvE",
+    });
 
-export default RootIndex
+    client.getEntry("6ZG60ULmrFe4eLf980dqfv").then((content) => {
+      console.log(content);
+      setContent(content);
+    });
+  }, []);
+
+  return (
+    <Layout location={props.location}>
+      <h4>Dynamic (via SDK)</h4>
+      {content && (
+        <>
+          <h1>{content.fields.customerName}</h1>
+          <img
+            src={content.fields.logo.fields.file.url}
+            style={{ width: `500px` }}
+          />
+        </>
+      )}
+      <h4>Static (Gatsby GraphQL)</h4>
+      <h1>{customer.customerName}</h1>
+    </Layout>
+  );
+};
+
+export default RootIndex;
 
 export const pageQuery = graphql`
-  query HomeQuery {
-    allContentfulBlogPost(sort: { fields: [publishDate], order: DESC }) {
-      edges {
-        node {
-          title
-          slug
-          publishDate(formatString: "MMMM Do, YYYY")
-          tags
-          heroImage {
-            fluid(maxWidth: 350, maxHeight: 196, resizingBehavior: SCALE) {
-              ...GatsbyContentfulFluid_tracedSVG
-            }
-          }
-          description {
-            childMarkdownRemark {
-              html
-            }
-          }
-        }
-      }
-    }
-    allContentfulPerson(
-      filter: { contentful_id: { eq: "15jwOBqpxqSAOy2eOO4S0m" } }
+  query MyQuery {
+    allContentfulCustomer(
+      filter: { id: {}, contentful_id: { eq: "6ZG60ULmrFe4eLf980dqfv" } }
     ) {
       edges {
         node {
-          name
-          shortBio {
-            shortBio
-          }
-          title
-          heroImage: image {
-            fluid(
-              maxWidth: 1180
-              maxHeight: 480
-              resizingBehavior: PAD
-              background: "rgb:000000"
-            ) {
-              ...GatsbyContentfulFluid_tracedSVG
-            }
-          }
+          id
+          customerName
         }
       }
     }
   }
-`
+`;
